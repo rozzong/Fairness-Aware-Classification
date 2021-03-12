@@ -19,16 +19,17 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
     ----------
     base_estimator : object
         The base estimator for which the adaptive weighting is performed.
-         Support for sample weighting is required.
+        Support for sample weighting is required.
     
     criterion : function
         Function criterion to perform the DIRECT optimization with. This
         function should be of the form:
         ``obj = criterion(y_true, y_pred, sensitive_samples)``
         
-    loss : function, default=lambda e, beta: np.exp(beta*e)
+    loss : str or function, default="exp"
         Convex loss function as ``l = loss(e, beta)``, such that beta is
-        its Lipschitz constant.
+        its Lipschitz constant. The default loss function is the
+        exponential loss: ``l = exp(b*e)``.
         
     eps : float, default=0.1
         Tolerance used as a stopping criterion while computing weights.
@@ -43,7 +44,7 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         np.array([a_s, a_ns, b_s, b_ns]).
     """
     
-    def __init__(self, base_estimator, criterion, loss=None, eps=0.1):
+    def __init__(self, base_estimator, criterion, loss="exp", eps=0.1):
         self.base_estimator = base_estimator
         self.criterion = criterion            
         self.loss = loss
@@ -64,7 +65,8 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
             
         sensitive_samples : array-like of shape (n_sensitive_samples,), default:None
             Indices of the sensitive samples. The array should be filled
-            with intergers.
+            with intergers. If set to None, it is assumed that no sample
+            is sensitive.
             
         Returns
         -------
@@ -77,11 +79,14 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         
         if sensitive_samples is None:
             warnings.warn("Argument `sensitive_samples` is not set.")
-            sensitive_samples = np.zeros(0).astype(int)
+            sensitive_samples = np.arange(0)
         
-        # Update the convex loss function, if needed
-        if self.loss is None:
+        # Update the convex loss function if needed, or check it
+        if self.loss is "exp":
             self.loss = lambda e, b: np.exp(b*e)
+        else:
+            if not callable(self.loss):
+                raise ValueError("Argument 'loss' is not valid.")
             
         self.base_estimator_ = clone(self.base_estimator)
         
@@ -108,7 +113,7 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         
         if not res.success:
             raise RuntimeError(
-                "DIRECT optimization failed to converge:\n\n"
+                "DIRECT optimization failed to converge:\n"
                 + res.message
             )
         

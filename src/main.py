@@ -29,7 +29,7 @@ if __name__ == "__main__":
     base_clf = LogisticRegression(penalty='none')
     
     # The criterion function `objective` should be customized
-    # depending on the data. It should be maimized.
+    # depending on the data. It should be maximized.
     awc = AdaptiveWeightsClassifier(base_clf, objective)
     
     from sklearn.utils.estimator_checks import check_estimator
