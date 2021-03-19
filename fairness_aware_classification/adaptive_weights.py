@@ -28,7 +28,7 @@ def exp_loss(e, b):
     """
     return np.exp(b*e)
 
-# TODO: Check if 
+# TODO: Check problems with CallbackCollector not being systematically called
 # ~ class CallbackCollector:
 
     # ~ def __init__(self, func, threshold=1e-3):
@@ -47,8 +47,7 @@ def exp_loss(e, b):
         # ~ return False
     
 class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
-    """
-    Adapative Weights Classifier (AdaptiveWeightsClassifier)
+    """Adapative Weights Classifier (AdaptiveWeightsClassifier)
     
     Performs a weighted classification upon a base classifier to preserve
     some fairness properties.
@@ -169,14 +168,13 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         # TODO: Pass optimization parameters as classifier parameters
         bounds = [(0, 1), (0, 1), (0, 3), (0, 3)]
         x0 = np.array([np.random.uniform(*b) for b in bounds])
-        # TODO: Check why CallbackCollector is not systematically called
         # ~ cb = CallbackCollector(_negative_objective, threshold=1e-3)
         res = minimize(
             _negative_objective,
             x0=x0,
             method="Powell",
             bounds=bounds,
-            # ~ callback=cb
+            # ~ callback=cb,
         )
         
         if not res.success:
@@ -211,7 +209,6 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         while np.linalg.norm(w-w_prev) >= self.eps:
             
             # Train the classifier with normalized weights
-            # ~ w_normalized = w / np.sum(w)
             self.base_estimator_.fit(X, y, sample_weight=w)
             
             # Make a prediction
