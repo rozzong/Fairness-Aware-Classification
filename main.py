@@ -8,13 +8,15 @@ from sklearn.model_selection import train_test_split
 
 from fairness_aware_classification.adaptive_weights import AdaptiveWeightsClassifier
 from fairness_aware_classification.metrics import dfpr, dfnr, p_rule
-from fairness_aware_classification.datasets import KDDDataset
+from fairness_aware_classification.datasets import AdultDataset
 from fairness_aware_classification.utils import sensitive_mask_from_features
     
 
 if __name__ == "__main__":
+            
     # Load the data
-    data = KDDDataset()
+    data = AdultDataset()
+    dataset_name = type(data).__name__
     
     # Split the data
     X_train, X_test, y_train, y_test, s_train, s_test = train_test_split(
@@ -26,6 +28,7 @@ if __name__ == "__main__":
     
     # Classifier to reweight
     base_clf = LogisticRegression(solver="liblinear")
+    base_clf_name = type(base_clf).__name__
     
     # The criterion function `objective` should be customized
     # depending on the data. It should be maximized.
@@ -36,7 +39,7 @@ if __name__ == "__main__":
     y_pred_base = base_clf.predict(X_test)
     acc_base = accuracy_score(y_test, y_pred_base)
     obj_base = data.objective(y_test, y_pred_base, s_test)
-    
+          
     # Get prediction for the weighted classsifier
     awc.fit(X_train, y_train, s_train)
     y_pred_weighted = awc.predict(X_test)
@@ -44,9 +47,15 @@ if __name__ == "__main__":
     obj_weighted = data.objective(y_test, y_pred_weighted, s_test)
     
     # Print results
-    print("{}:".format(type(base_clf).__name__))
+    print("{}:".format(base_clf_name))
     print("* Accuracy: {:.4f}".format(acc_base))
     print("* Objective: {:.4f}".format(obj_base))
     print("AdaptiveWeightsClassifier")
     print("* Accuracy: {:.4f}".format(acc_weighted))
     print("* Objective: {:.4f}".format(obj_weighted))
+    
+    # Save results
+    np.save(dataset_name+"_base.npy", y_pred_base)
+    np.save(dataset_name+"_awc.npy", y_pred_weighted)
+    
+    

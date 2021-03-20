@@ -7,7 +7,7 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.compose import make_column_transformer, make_column_selector
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.metrics import accuracy_score
 
 from ..metrics import p_rule
@@ -21,8 +21,12 @@ class KDDDataset:
     
     def __init__(self):
         # Try to load the preprocessed dump
+        # TO RECOVER
+        # ~ file_exists = os.path.isfile(DATA_PATH + os.sep + \
+            # ~ "kdd_census_income_preprocessed.csv")
+        # TO REMOVE
         file_exists = os.path.isfile(DATA_PATH + os.sep + \
-            "kdd_census_income_preprocessed.csv")
+            "kdd_census_income_preprocessed_reduced.csv")
             
         if not file_exists:
             # Load and split the data
@@ -39,6 +43,13 @@ class KDDDataset:
             df = df.astype({"occupation code": object})
             df = df.astype({"own business or self employed": object})
             
+            # TO REMOVE
+            # Keep only features of interest and the target
+            df = df[
+                ["age", "education", "wage per hour", "sex", "marital status", \
+                "citizenship", "weeks worked in year", "income"]
+            ]
+            
             # Save index and columns
             index, columns = df.index, df.columns
             
@@ -53,6 +64,7 @@ class KDDDataset:
             )
             df_num_array = scaler.fit_transform(df)
             
+            # TO RECOVER
             # Perform encoding
             enc = make_column_transformer(
                 (OneHotEncoder(drop='if_binary', sparse=False), cat_features),
@@ -60,6 +72,15 @@ class KDDDataset:
             )
             df_cat_array = enc.fit_transform(df)
             
+            # TO REMOVE
+            # ~ # Perform encoding
+            # ~ enc = make_column_transformer(
+                # ~ (OrdinalEncoder(), cat_features),
+                # ~ remainder="drop"
+            # ~ )
+            # ~ df_cat_array = enc.fit_transform(df)
+            
+            # TO RECOVER
             # Rebuild encoded columns
             # TODO: Make that less cryptic
             was_encoded = enc.transformers_[0][1].drop_idx_ == None
@@ -91,10 +112,15 @@ class KDDDataset:
                     new_columns.append(feature)
             
             # Rebuild the dataframe
+            # TO RECOVER
             df = pd.DataFrame(index=index, columns=new_columns)
             df[num_features] = df_num_array
+            # TO RECOVER
             df[new_cat_features] = df_cat_array
-                    
+            # TO REMOVE
+            # ~ df[cat_features] = df_cat_array
+            
+            # TO RECOVER
             # Reapply correct dtypes
             for f in new_columns:
                 if f in num_features:
@@ -103,15 +129,25 @@ class KDDDataset:
                     df[f] = df[f].astype(np.int64)
         
             # Save the dataset
+            # TO RECOVER
+            # ~ df.to_csv(
+                # ~ DATA_PATH + os.sep + "kdd_census_income_preprocessed.csv",
+            # ~ )
+            # TO REMOVE
             df.to_csv(
-                DATA_PATH + os.sep + "kdd_census_income_preprocessed.csv",
+                DATA_PATH + os.sep + "kdd_census_income_preprocessed_reduced.csv",
             )
+            
+            print(df)
         
         else:
             # Load and split the data
-            file_path = DATA_PATH + os.sep + "kdd_census_income_preprocessed.csv"
+            # TO RECOVER
+            # ~ file_path = DATA_PATH + os.sep + "kdd_census_income_preprocessed.csv"
+            # ~ df = pd.read_csv(file_path, index_col=0)
+            # TO REMOVE
+            file_path = DATA_PATH + os.sep + "kdd_census_income_preprocessed_reduced.csv"
             df = pd.read_csv(file_path, index_col=0)
-            print(df)
         
         # Set the target and do some feature selection
         self.y = df.pop("income")

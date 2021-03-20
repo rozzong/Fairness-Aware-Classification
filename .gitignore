@@ -2,3 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Preprocessed dataset dumps
+fairness_aware_classification/datasets/data/
+
+# Prediction savings
+*.npy

@@ -109,6 +109,10 @@ def p_rule(y_true, y_pred, sensitive):
     
     a = np.sum(positive_pred[s]) / np.sum(positive_pred[~s]) \
         * np.sum(~s) / np.sum(s)
-    score = min(a, 1/a)
+        
+    if a == 0:
+        score = 0
+    else:
+        score = min(a, 1/a)
         
     return score
