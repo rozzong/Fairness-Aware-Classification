@@ -10,7 +10,7 @@ from sklearn.compose import make_column_transformer, make_column_selector
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.metrics import accuracy_score
 
-from ..metrics import p_rule
+from ..metrics import p_rule_score
 from ..utils import sensitive_mask_from_features
 
 
@@ -117,14 +117,16 @@ class BankDataset:
         
         # Set default sensitive attributes
         self.sensitive_features = ["married"]
+        self.sensitive_values = [1]
         self.sensitive = sensitive_mask_from_features(
             self.X,
             self.sensitive_features,
+            self.sensitive_values
         )
     
     def objective(self, y_true, y_pred, sensitive):
         acc = accuracy_score(y_true, y_pred)
-        p = p_rule(y_true, y_pred, sensitive)
+        p = p_rule_score(y_true, y_pred, sensitive)
        
-        return max(acc, p)
+        return acc + p
 

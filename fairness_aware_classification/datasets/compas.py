@@ -10,7 +10,7 @@ from sklearn.compose import make_column_transformer, make_column_selector
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.metrics import accuracy_score
 
-from ..metrics import dfpr, dfnr
+from ..metrics import dfpr_score, dfnr_score
 from ..utils import sensitive_mask_from_features
 
 
@@ -115,16 +115,16 @@ class COMPASDataset:
         
         # Set default sensitive attributes
         self.sensitive_features = ["sex"]
-        sensitive_values = [0]
+        self.sensitive_values = [0]
         self.sensitive = sensitive_mask_from_features(
             self.X,
             self.sensitive_features,
-            sensitive_values,
+            self.sensitive_values,
         )
     
     def objective(self, y_true, y_pred, sensitive):
         acc = accuracy_score(y_true, y_pred)
-        d_p = dfpr(y_true, y_pred, sensitive)
-        d_n = dfnr(y_true, y_pred, sensitive)
+        dfpr = dfpr_score(y_true, y_pred, sensitive)
+        dfnr = dfnr_score(y_true, y_pred, sensitive)
         
-        return 2 * acc - abs(d_p) - abs(d_n)
+        return 2 * acc - abs(dfpr) - abs(dfnr)

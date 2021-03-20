@@ -67,11 +67,11 @@ def sensitive_mask_from_features(X, sensitive_features, sensitive_values=None):
         
     if isinstance(X_, pd.DataFrame):
         for f, v in zip(sensitive_features, sensitive_values):
-            sensitive = sensitive |  (X_[f] == v)
+            sensitive = sensitive | (X_[f] == v)
         
     elif isinstance(X, np.ndarray):
         for f, v in zip(sensitive_features, sensitive_values):
-            sensitive = sensitive |  (X_[:,f] == v)
+            sensitive = sensitive | (X_[:,f] == v)
             
     else:
         raise ValueError("X should be either a np.ndarray or a " \

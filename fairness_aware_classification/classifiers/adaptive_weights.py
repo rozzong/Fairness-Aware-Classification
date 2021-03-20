@@ -19,7 +19,7 @@ from sklearn.utils.multiclass import check_classification_targets, type_of_targe
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from scipy.optimize import minimize
 
-from .utils import spy
+from ..utils import spy
 
 
 def exp_loss(e, b):
@@ -29,22 +29,27 @@ def exp_loss(e, b):
     return np.exp(b*e)
 
 # TODO: Check problems with CallbackCollector not being systematically called
-# ~ class CallbackCollector:
+# TODO: Make things more proper
+class CallbackCollector:
 
-    # ~ def __init__(self, func, threshold=1e-3):
-        # ~ self._func  = func
-        # ~ self._threshold = threshold
-        # ~ self._prev_val = None
+    def __init__(self, func, threshold=1e-3):
+        self._func  = func
+        self._threshold = threshold
+        self._last_x = None
+        self._last_val = None
 
-    # ~ def __call__(self, x):
-        # ~ val = self._func(x)
-        # ~ if self._prev_val is None:
-            # ~ self._prev_val = val
-        # ~ elif abs(val-self._prev_val) <= self._threshold:
+    def __call__(self, x):
+        self._last_x = x
+        val = self._func(x)
+        print("Stored", x, "for", val)
+        if self._last_val is None:
+            self._last_val = val
+        elif abs(val-self._last_val) <= self._threshold:
             # ~ return True
-        # ~ else:
-            # ~ self._prev_val = val
-        # ~ return False
+            raise StopIteration
+        else:
+            self._last_val = val
+        return False
     
 class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
     """Adapative Weights Classifier (AdaptiveWeightsClassifier)
@@ -82,6 +87,9 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
+        
+    n_features_in_: int
+        The number of features the classifier was fit for.
     """
     
     _required_parameters = ["base_estimator", "criterion"]
@@ -104,10 +112,11 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         y : array-like of shape (n_samples,)
             The target values (class labels).
             
-        sensitive_samples : array-like of shape (n_sensitive_samples,), default:None
-            Indices of the sensitive samples. The array should be filled
-            with integers. If set to None, it is assumed that no sample
-            is sensitive.
+        sensitive : array-like of shape (n_samples,), default=None
+            Mask indicating which samples are sensitive. The array should
+            contain boolean values, where True indicates that the corresponding
+            sample is sensitive. If set to None, no sample is considered as 
+            sensitive.
             
         Returns
         -------
@@ -130,25 +139,25 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("Target values should belong to a binary set, " \
                              "but {} classes were found.".format(n_classes))
         
-        # Save features
+        # Handle the case with no specified sensitive sample
+        if sensitive is None:
+            warnings.warn("Argument `sensitive` is not set. " \
+                          "Setting all samples as non-sensitives.")
+            sensitive = np.zeros(len(y)).astype(bool)
+        
+        # Save number of features
         self.n_features_in_ = X.shape[1]
         
         # Save classes
         self.classes_, y = np.unique(y, return_inverse=True)
         
-        if sensitive is None:
-            warnings.warn("Argument `sensitive` is not set. " \
-                          "Setting all samples as non-sensitives.")
-            sensitive = np.zeros(len(y_pred)).astype(bool)
-        
         # Update the convex loss function if needed, or check it
         if self.loss is "exp":
             self._loss = exp_loss
+        elif callable(self.loss):
+            self._loss = self.loss
         else:
-            if callable(self.loss):
-                self._loss = self.loss
-            else:
-                raise ValueError("Argument 'loss' is not valid.")
+            raise ValueError("Argument 'loss' is not valid.")
             
         self.base_estimator_ = clone(self.base_estimator)
         
@@ -168,26 +177,30 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         # TODO: Pass optimization parameters as classifier parameters
         bounds = [(0, 1), (0, 1), (0, 3), (0, 3)]
         x0 = np.array([np.random.uniform(*b) for b in bounds])
-        # ~ cb = CallbackCollector(_negative_objective, threshold=1e-3)
-        res = minimize(
-            _negative_objective,
-            x0=x0,
-            method="Powell",
-            bounds=bounds,
-            # ~ callback=cb,
-        )
-        
-        if not res.success:
-            try:
-                msg = res.message.decode("utf-8")
-            except AttributeError:
-                msg = res.message
-            raise RuntimeError(
-                "Optimization failed to converge:\n"
-                + msg
+        cb = CallbackCollector(_negative_objective, threshold=1e-2)
+        try:
+            res = minimize(
+                _negative_objective,
+                x0=x0,
+                method="Powell",
+                bounds=bounds,
+                callback=cb,
             )
-        
-        self.best_params_ = res.x
+            best_x = res.x
+        except (KeyboardInterrupt, StopIteration) as e:
+            best_x = cb._last_x
+        finally:
+            self.best_params_ = best_x
+
+        # ~ if not res.success:
+            # ~ try:
+                # ~ msg = res.message.decode("utf-8")
+            # ~ except AttributeError:
+                # ~ msg = res.message
+            # ~ raise RuntimeError(
+                # ~ "Optimization failed to converge:\n"
+                # ~ + msg
+            # ~ )
         
         # Retrain the classifier with the found best parameters
         # TODO: Recover the best screened values of parameters
@@ -236,7 +249,7 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
+            The input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
             
         Returns
