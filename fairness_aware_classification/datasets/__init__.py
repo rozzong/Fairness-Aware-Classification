@@ -14,5 +14,3 @@ __all__ = [
     "COMPASDataset",
     "KDDDataset",
 ]
-
-# TODO: Make something clean, with a parent class
