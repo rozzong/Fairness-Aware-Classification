@@ -137,7 +137,7 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
     n_estimators: int, default=50
-        number of base estimators
+        The number of base estimators.
         
     base_classifier: object, default=None
         The base estimator from which the boosted ensemble is built.
@@ -207,6 +207,11 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
             contain boolean values, where True indicates that the corresponding
             sample is sensitive. If set to None, no sample is considered as 
             sensitive.
+            
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         # Perform the arrays
         # TODO: Investigate sparse matrices compatibility
