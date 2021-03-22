@@ -59,8 +59,8 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
     
     Parameters
     ----------
-    base_estimator : object
-        The base estimator for which the adaptive weighting is performed.
+    base_classifier : object
+        The base classifier for which the adaptive weighting is performed.
         Support for sample weighting is required.
     
     criterion : function
@@ -78,8 +78,8 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    base_estimator_ : estimator
-        The base estimator for which the adaptive weighting is performed.
+    base_classifier_ : estimator
+        The base classifier for which the adaptive weighting is performed.
         
     best_params_ : ndarray of shape (4,)
         Best found parameters by the optimization scheme, ordered as
@@ -92,10 +92,10 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         The number of features the classifier was fit for.
     """
     
-    _required_parameters = ["base_estimator", "criterion"]
+    _required_parameters = ["base_classifier", "criterion"]
     
-    def __init__(self, base_estimator, criterion, loss="exp", eps=0.1):
-        self.base_estimator = base_estimator
+    def __init__(self, base_classifier, criterion, loss="exp", eps=0.1):
+        self.base_classifier = base_classifier
         self.criterion = criterion            
         self.loss = loss
         self.eps = eps
@@ -127,8 +127,8 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         # TODO: Investigate sparse matrices compatibility
         X, y = check_X_y(X, y, accept_large_sparse=False)
         
-        # Check that the base estimator is an classifier
-        if not is_classifier(self.base_estimator):
+        # Check that the base estimator is a classifier
+        if not is_classifier(self.base_classifier):
             raise ValueError("The base estimator should be a classifier, " \
                              "but it is not.")
         
@@ -159,7 +159,7 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         else:
             raise ValueError("Argument 'loss' is not valid.")
             
-        self.base_estimator_ = clone(self.base_estimator)
+        self.base_classifier_ = clone(self.base_classifier)
         
         # Define an objective function according to the chosen criterion
         @spy
@@ -168,7 +168,7 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
             self.__train(X, y, sensitive, params)
             
             # Compute the goal
-            y_pred = self.base_estimator_.predict(X)
+            y_pred = self.base_classifier_.predict(X)
             objective = self.criterion(y, y_pred, sensitive)
             
             return -objective
@@ -222,10 +222,10 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         while np.linalg.norm(w-w_prev) >= self.eps:
             
             # Train the classifier with normalized weights
-            self.base_estimator_.fit(X, y, sample_weight=w)
+            self.base_classifier_.fit(X, y, sample_weight=w)
             
             # Make a prediction
-            y_pred = self.base_estimator_.predict_proba(X)[:,1]
+            y_pred = self.base_classifier_.predict_proba(X)[:,1]
             
             # Compute sensitive and non-sensitive errors          
             e_s = y_pred[sensitive] - y[sensitive]
@@ -239,7 +239,7 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
                             + self._loss(-e_ns, b_ns) * a_ns
             w = w / sum(w) * len(w)
     
-    @if_delegate_has_method(delegate='base_estimator_')
+    @if_delegate_has_method(delegate='base_classifier_')
     def predict(self, X):
         """Predict classes for X.
         
@@ -259,7 +259,7 @@ class AdaptiveWeightsClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self)
         
-        return self.base_estimator_.predict(X)
+        return self.base_classifier_.predict(X)
         
     def _more_tags(self):
         tags = {

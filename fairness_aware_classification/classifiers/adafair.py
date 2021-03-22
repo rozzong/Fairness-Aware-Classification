@@ -11,7 +11,7 @@ The implementation of AdaFair.
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import is_classifier#, clone
+from sklearn.base import is_classifier, clone
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
@@ -135,13 +135,13 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
     """AdaFair Classifier (AdaFairClassifier)
     
     Parameters
-    ----------
-    n_estimators: int, default=50
-        The number of base estimators.
-        
-    base_classifier: object, default=None
+    ----------        
+    base_classifier: object
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required.
+        
+    n_estimators: int, default=50
+        The number of base estimators.
         
     eps: float, default=1e-3
         The error threshold.
@@ -179,11 +179,14 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
     n_features_in_: int
         The number of features the classifier was fit for.
     """
-    def __init__(self, n_estimators=50, base_classifier=None, eps=1e-3, c=1,
-                 get_alpha=None, update_distribution=None,
-                 get_fairness_cost=None):
-        self.n_estimators = n_estimators
+    
+    _required_parameters = ["base_classifier"]
+    
+    def __init__(self, base_classifier, n_estimators=50, eps=1e-3, c=1,
+            get_alpha=None, update_distribution=None,
+            get_fairness_cost=None):
         self.base_classifier = base_classifier
+        self.n_estimators = n_estimators
         self.eps = eps
         self.c = c
         self.get_alpha = get_alpha
@@ -224,7 +227,7 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
                 raise ValueError("Argument 'sensitive' is not valid.")
         
         # Check that the base estimator is an classifier
-        if not is_classifier(self.base_classifier()):
+        if not is_classifier(self.base_classifier):
             raise ValueError("The base estimator should be a classifier, " \
                              "but it is not.")
         
@@ -278,7 +281,7 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
         for i in range(self.n_estimators):
             
             # Train the last base classifier
-            self.classifiers_.append(self.base_classifier())     
+            self.classifiers_.append(clone(self.base_classifier))     
             self.classifiers_[-1].fit(X, y_ada, sample_weight=distribution)
             
             # Get predictions and prediction probabilities of the last classifier
@@ -348,6 +351,8 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
             The predicted classes.
         """
         check_is_fitted(self)
+        
+        X = check_array(X)
         
         if end == "optimum":
             end = self.optimum_

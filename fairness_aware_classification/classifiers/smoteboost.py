@@ -10,13 +10,15 @@ The implementation of SMOTEBoost.
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import is_classifier, clone
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.neighbors import NearestNeighbors
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 
 
-class SMOTE(object):
+class SMOTE:
     """SMOTE
     
     Performs SMOTE resampling to address class imbalance.
@@ -30,39 +32,33 @@ class SMOTE(object):
     ----------
     k_neighbors_ : int
         The number of nearest neighbors.
-        
-    
     """
 
     def __init__(self, k_neighbors=5):
         self.k_neighbors_ = k_neighbors
 
-    def fit(self, X, y=None):
-        """Fit SMOTE to the minority class, by looking for the `k_neighbors`
-        nearest neighbors of each sample from the minority class.
+    def fit(self, X):
+        """Fit SMOTE on a training set, by looking for the `k_neighbors`
+        nearest neighbors of each sample.
 
         Parameters
         ----------
-        X : array-like of shape (n_minority_samples, n_features)
-            The samples from the minority class, already chosen.
-            
-        y : Ignored
-            Not used, present here for API consistency by convention.
+        X : array-like of shape (n_samples, n_features)
+           The samples to oversample from.
         """
-        self.X_ = X
-        self.n_minority_samples_, self.n_features_ = X.shape
+        self.X = check_array(X)
+        self.n_features_in_ = self.X.shape[1]
 
-        # Learn nearest neighbors
-        # TODO: Why k + 1?
+        # Fit nearest neighbors
         n_neighbors = self.k_neighbors_ + 1
-        self.neigh_ = NearestNeighbors(n_neighbors=n_neighbors)
-        self.neigh_.fit(X)
+        self.neigh = NearestNeighbors(n_neighbors=n_neighbors)
+        self.neigh.fit(self.X)
 
         return self
 
     def sample(self, n_samples):
         """
-        Generate new synthetic samples from the minority class.
+        Generate new synthetic samples from the training samples.
 
         Parameters
         ----------
@@ -74,17 +70,16 @@ class SMOTE(object):
         X_new : array-like of shape (n_samples, n_features)
             The new synthetic samples.
         """
-        X_new = np.zeros(shape=(n_samples, self.n_features_))
+        X_new = np.zeros((n_samples, self.n_features_in_))
         
-        # Calculate synthetic samples
         for i in range(n_samples):
             
             # Pick a sample randomly
-            j = np.random.choice(range(self.X_.shape[0]))
+            j = np.random.choice(range(self.X.shape[0]))
 
             # Take the k nearest neighbors around it
-            X_j_t = self.X_[j].reshape(1, -1)
-            new_neighs = self.neigh_.kneighbors(X_j_t, return_distance=False)
+            X_j = self.X[j].reshape(1, -1)
+            new_neighs = self.neigh.kneighbors(X_j, return_distance=False)
             
             # Keep all columns but the first one as it is X[j] itself
             new_neighs = new_neighs[:,1:]
@@ -92,13 +87,12 @@ class SMOTE(object):
             # Choose one of the k neighbors
             new_neigh_index = np.random.choice(new_neighs[0])  
             
-            # Measure the index between X[j] and the randomly choosen neighbor
-            distance = self.X_[new_neigh_index] - self.X_[j] 
+            # Measure the index between X[j] and the randomly chosen neighbor
+            distance = self.X[new_neigh_index] - self.X[j] 
             fraction = np.random.random()
             
-            # Synthetize a new sample by adding to X[j] a fraction of the distance
-            # ~ X_new[i, :] = self.X[j, :] + fraction * distance[:]
-            X_new[i] = self.X_[j] + fraction * distance
+            # Synthetize a new sample
+            X_new[i] = self.X[j] + fraction * distance
 
         return X_new
 
@@ -108,9 +102,8 @@ class SMOTEBoostClassifier(BaseEstimator, ClassifierMixin):
     
     Parameters
     ----------        
-    base_classifier : callable, default=None
-        Callable that returns a base estimator from which the boosted
-        ensemble is built.
+    base_classifier : object
+        Base classifier from which the boosted ensemble is built.
         
     n_estimators : int, default=3
         The number of base estimators.
@@ -126,9 +119,6 @@ class SMOTEBoostClassifier(BaseEstimator, ClassifierMixin):
     classifiers_ : list
         The collection of fitted base classifiers.
 
-    n_classes_ : int
-        The number of classes.
-
     classes_ : array of shape (n_classes,)
         The classes labels.
     
@@ -138,8 +128,10 @@ class SMOTEBoostClassifier(BaseEstimator, ClassifierMixin):
     alphas_ : array of shape (n_estimators,)
         The weights for each estimator in the boosted ensemble.
     """
+    
+    _required_parameters = ["base_classifier"]
 
-    def __init__(self, base_classifier=None, n_estimators=3, k_neighbors=5, n=5): 
+    def __init__(self, base_classifier, n_estimators=3, k_neighbors=5, n=5): 
         self.base_classifier = base_classifier  
         self.n_estimators = n_estimators  
         self.k_neighbors = k_neighbors
@@ -163,56 +155,69 @@ class SMOTEBoostClassifier(BaseEstimator, ClassifierMixin):
         """
         X, y = check_X_y(X, y)
         
-        # Initialize lists to hold models and model weights (alphas)
+        # Check that the base estimator is a classifier
+        if not is_classifier(self.base_classifier):
+            raise ValueError("The base estimator should be a classifier, " \
+                             "but it is not.")
+                             
+        # Check that the it is a binary classification problem
+        check_classification_targets(y)
+        n_classes = len(np.unique(y))
+        if type_of_target(y) != "binary":
+            raise ValueError("Target values should belong to a binary set, " \
+                             "but {} classes were found.".format(n_classes))
+        
+        # Initialize lists to hold models and model weights
         self.classifiers_ = []
         self.alphas_ = []
 
         # Find the minority class
-        (unique, counts) = np.unique(y, return_counts=True)
-        minority_class = unique[counts==-np.max(-counts)][0]
-        X_minority = X[y == minority_class]
-        self.n_classes_ = len(unique)
-        self.classes_ = unique # List of y's possible classes
-        self.minority_class_ = minority_class
+        self.classes_, counts = np.unique(y, return_counts=True)
+        self.minority_class_ = self.classes_[counts==-np.max(-counts)][0]
+        X_minority = X[y == self.minority_class_]
+        
+        # Fit SMOTE on the sensitive samples       
+        smote = SMOTE(k_neighbors=self.k_neighbors)
+        smote.fit(X_minority)
 
-        # Initialize the distribution D1 over the examples
-        D = np.ones_like(X) / (len(y) * (self.n_classes_-1))  
+        # Initialize the distribution
+        dist = np.ones_like(X) / (len(y) * (n_classes-1))  
         for i in range(len(y)):
-            D[i, np.where(self.classes_ == y[i])[0][0]] = 0 
+            dist[i, np.where(self.classes_ == y[i])[0][0]] = 0
 
-        # Iterate T times
         for i in range(self.n_estimators):
-            # Modify the distribution by creating N synthetic examples from minority class
-            smote = SMOTE(k_neighbors=self.k_neighbors)
-            smote.fit(X_minority)
+            # Create new artificial samples from the minority class
             X_new = smote.sample(self.n)
-            y_new = np.ones(self.n) * minority_class
+            y_new = np.ones(self.n) * self.minority_class_
 
             # Append the new examples
-            xsmote = np.concatenate((X, X_new))
-            ysmote = np.concatenate((y, y_new))
+            X_smote = np.concatenate((X, X_new))
+            y_smote = np.concatenate((y, y_new))
 
             # Train a weak learner with the modified distribution
-            self.classifiers_.append(self.base_classifier())     
-            self.classifiers_[i].fit(xsmote, ysmote)
+            self.classifiers_.append(clone(self.base_classifier))     
+            self.classifiers_[i].fit(X_smote, y_smote)
 
             # Make predictions over the initial dataset
             h = self.classifiers_[i].predict_proba(X) 
 
-            # Compute the pseudo-loss of hypothesis ht
+            # Compute the pseudo-loss of hypothesis
+            # TODO: Try to avoid nested loops
             epsilon = 0
             for k in range(len(y)):
-                for j in range(self.n_classes_):
-                    epsilon += D[k,j] \
+                for j in range(n_classes):
+                    epsilon += dist[k,j] \
                     * (1.- h[k,np.where(self.classes_ == y[k])[0][0]] + h[k,j])
-            beta = epsilon / (1.-epsilon)
+            beta = epsilon / (1. - epsilon)
             self.alphas_.append(np.log(1/beta))
 
             # Update distribution
-            Z = np.sum(D)
+            # TODO: Try to avoid nested loops
+            z = np.sum(dist)
             for k in range(len(y)):
-                for j in range(self.n_classes_):
-                    D[k,j] = D[k,j] / Z * beta**(0.5*(1. + h[k,np.where(self.classes_==y[k])[0][0]] - h[k,j]))
+                for j in range(n_classes):
+                    exp = (1. + h[k,np.where(self.classes_==y[k])[0][0]] - h[k,j]) / 2
+                    dist[k,j] = dist[k,j] / z * beta**exp
     
     def predict(self, X):
         """Predict classes for X.
@@ -231,12 +236,25 @@ class SMOTEBoostClassifier(BaseEstimator, ClassifierMixin):
         y : ndarray of shape (n_samples,)
             The predicted classes.
         """
-        final_predictions = np.zeros((X.shape[0], self.n_classes_))
+        check_is_fitted(self)
+        
+        X = check_array(X)
+        
+        final_predictions = np.zeros((X.shape[0], len(self.classes_)))
         y = np.zeros(X.shape[0])
 
         for t in range(self.n_estimators):
-            final_predictions += self.classifiers_[t].predict_proba(X) * self.alphas_[t]
+            final_predictions \
+                += self.classifiers_[t].predict_proba(X) * self.alphas_[t]
+                
         for i in range(len(X)):
             y[i] = self.classes_[final_predictions[i,:] == np.amax(final_predictions[i,:])][0]
         
         return y
+        
+    def _more_tags(self):
+        tags = {
+            "binary_only": True,
+        }
+        
+        return tags
