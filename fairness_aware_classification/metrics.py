@@ -7,7 +7,7 @@ A collection of metrics for fairness assessment in machine learning.
 
 import numpy as np
 
-# AdaptiveWeights metrics
+
 def dfpr_score(y_true, y_pred, sensitive=None):
     """DFPR classification score.
     
@@ -214,8 +214,7 @@ def ber_score(y_true, y_pred):
     score = 1 - (tp / (tp+fn) + tn / (tn+fp)) / 2
     
     return score
-    
-# TODO: Check that here, sensitive == True means protected (non-sensitive)    
+      
 def tpr_protected_score(y, y_pred, sensitive):
     """True Positive Rate score for the protected group.
     

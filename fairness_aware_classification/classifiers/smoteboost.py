@@ -4,7 +4,7 @@ The implementation of SMOTEBoost.
 """
 
 # Authors: Simona Nitti, Gabriel Rozzonelli
-# Based on the work of of the following paper:
+# Based on the work of the following paper:
 # [1] N. Chawla, A. Lazarevic, L. Hall, et K. Bowyer, « SMOTEBoost: 
 #     Improving Prediction  of the Minority Class in Boosting ».
 

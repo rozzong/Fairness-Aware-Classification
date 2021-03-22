@@ -4,7 +4,7 @@ The implementation of AdaFair.
 """
 
 # Authors: Bekarys Nurtay, Gabriel Rozzonelli
-# Based on the work of of the following paper:
+# Based on the work of the following paper:
 # [1] V. Iosifidis, et E. Ntoutsi, « AdaFair: Cumulative Fairness
 #     Adaptive Boosting ».
 
@@ -323,7 +323,6 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
                 self.optimum_ = i + 1
                 
         return self
-
            
     def predict(self, X, end=None):
         """Predict classes for X.

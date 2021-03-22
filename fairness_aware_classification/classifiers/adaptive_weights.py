@@ -4,7 +4,7 @@ The implementation of Adaptive Sensitive Reweighting.
 """
 
 # Author: Gabriel Rozzonelli
-# Based on the work of of the following paper:
+# Based on the work of the following paper:
 # [1] E. Krasanakis, E. Spyromitros-Xioufis, S. Papadopoulos, et Y. Kompatsiaris,
 #     « Adaptive Sensitive Reweighting to Mitigate Bias in Fairness-aware
 #     Classification ».

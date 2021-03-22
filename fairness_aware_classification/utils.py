@@ -32,7 +32,7 @@ def sensitive_mask_from_samples(sensitive_samples, n_samples):
     return sensitive
     
 def sensitive_mask_from_features(X, sensitive_features, sensitive_values=None):
-    """Sensitive mask from samples.
+    """Sensitive mask from features.
     
     This function returns a Boolean mask whose length is the number of
     provided samples, based on specified sensitive features.
@@ -59,7 +59,7 @@ def sensitive_mask_from_features(X, sensitive_features, sensitive_values=None):
     X_ = X.copy()
     
     # Create the mask
-    sensitive = np.zeros(len(X_))
+    sensitive = np.zeros(len(X_)).astype(bool)
     
     # If no values are specified, set the sensitive criteria to True
     if sensitive_values is None:

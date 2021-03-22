@@ -47,7 +47,7 @@ if __name__ == "__main__":
     }
     
     # Create a repeated stratified k-fold iterator
-    rsfk = RepeatedStratifiedKFold(n_splits=5, n_repeats=10)
+    rsfk = RepeatedStratifiedKFold(n_splits=3, n_repeats=10)
     splits = rsfk.split(data.X, data.y)
     n_splits = rsfk.get_n_splits()
     
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     )
     res = pd.DataFrame(index=range(n_splits), columns=columns)
     
-    # Instanciate a progrees bar
+    # Instanciate a progress bar
     pbar = tqdm(splits, total=n_splits)
     
     for i, (train_index, test_index) in enumerate(pbar):
