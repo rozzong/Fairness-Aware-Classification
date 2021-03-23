@@ -60,22 +60,38 @@ This repository contains three methods to address fairness issues in classificat
     - `metrics.py` - a collection of metrics used for fairness assessment;
     - `utils.py` - additional functions used in the project
 
+## Fairness-Aware-Classification package installation and usage
+
+In order to get use github repositary, at first, you should to clone it:
+
+`!git clone https://github.com/rozzong/Fairness-Aware-Classification`
+
+On the second step you should set the path to the cloned package:
+
+`import sys`
+
+`sys.path.insert(0, "Fairness-Aware-Classification")`
+
+After these steps you can import any item from the repository, for example:
+
+`from fairness_aware_classification.classifiers import AdaFairClassifier`
+
 ## Results
 
 Four algorithms (including original AdaBoost) were run and tested via bootstrap with 10 test-train splits of ration 0.5. The results of these runs on four datasets are represented below.
 
 The fairness and accuracy scores comparison of four algoritms on Adult census income dataset:
 
-![](http://url/to/img.png)
+<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/Adult.png" width="350" height="350">
 
 The fairness and accuracy scores comparison of four algoritms on Bank marketing dataset:
 
-![](http://url/to/img.png)
+<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/Bank.png" width="350" height="350">
 
 The fairness and accuracy scores comparison of four algoritms on COMPASS dataset:
 
-![](http://url/to/img.png)
+<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/Compass.png" width="350" height="350">
 
 The fairness and accuracy scores comparison of four algoritms on Census-income (KDD) dataset:
 
-![](http://url/to/img.png)
+<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/KDD.png" width="350" height="350">
