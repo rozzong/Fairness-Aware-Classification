@@ -43,7 +43,7 @@ def ada_fair_alpha(y_true, y_pred_t, distribution):
 
     return alpha
   
-def ada_fairness_cost(y_true, y_pred, sensitive, eps):
+def ada_fairness_cost(y_true, y_pred, y_preds, sensitive, eps):
     """
     Compute the fairness cost for sensitive features.
     
@@ -54,6 +54,9 @@ def ada_fairness_cost(y_true, y_pred, sensitive, eps):
     
     y_pred: 1-D array
         The predicted values.
+        
+    y_preds: 1-D array
+        The cumulative prediction values.
         
     sensitive : array-like of shape (n_samples,)
         Mask indicating which samples are sensitive. The array should
@@ -76,8 +79,8 @@ def ada_fairness_cost(y_true, y_pred, sensitive, eps):
     protected_neg= ((y_true == -1) & ~sensitive).astype(int)
     unprotected_neg = ((y_true == -1) & sensitive).astype(int)
     
-    dfpr = dfpr_score(y_true, y_pred, sensitive)
-    dfnr = dfnr_score(y_true, y_pred, sensitive)
+    dfpr = dfpr_score(y_true, y_preds, sensitive)
+    dfnr = dfnr_score(y_true, y_preds, sensitive)
     
     if abs(dfnr) > eps:
         if dfnr > 0:
@@ -287,19 +290,18 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
             # Get predictions and prediction probabilities of the last classifier
             y_pred = self.classifiers_[-1].predict(X)
             y_proba = self.classifiers_[-1].predict_proba(X)[:,1]
-            
             # Compute the confidence score derived from prediction probabilities
-            confidence = (y_proba - 0.5) / 0.5 * y_pred
+            confidence = abs(y_proba/0.5 - 1)
             
             # Compute the weight of the current classifier 
             alpha_t = self.get_alpha(y_ada, y_pred, distribution)
             self.alphas_.append(alpha_t)
             
             # Update of weighted votes of all fitted base estimators
-            y_preds += (y_pred * alpha_t)
+            y_preds += y_pred * alpha_t
             
             # Compute the fairness cost for the current base learner predictions
-            u = self.get_fairness_cost(y_ada, y_pred, sensitive, self.eps)
+            u = self.get_fairness_cost(y_ada, y_pred, y_preds, sensitive, self.eps)
             
             # Update weights of instances
             distribution = self.update_distribution(
@@ -323,8 +325,9 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
                 self.optimum_ = i + 1
                 
         return self
+
            
-    def predict(self, X, end=None):
+    def predict(self, X, end="optimum"):
         """Predict classes for X.
         
         The predicted class of an input sample is computed by weighted
@@ -335,7 +338,7 @@ class AdaFairClassifier(BaseEstimator, ClassifierMixin):
         X : array-like of shape (n_samples, n_features)
             The input samples.
         
-        end: int or str, default=None
+        end: int or str, default="optimum"
             The number of base estimators to use to do the prediction.
             
             - If set to None, all the trained estimators are used.

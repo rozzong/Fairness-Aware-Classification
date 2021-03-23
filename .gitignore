@@ -8,3 +8,6 @@ fairness_aware_classification/datasets/data/
 
 # Prediction savings
 *.npy
+
+# Results from `main.py`
+/*.csv
