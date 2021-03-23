@@ -82,16 +82,16 @@ Four algorithms (including original AdaBoost) were run and tested via bootstrap 
 
 The fairness and accuracy scores comparison of four algoritms on Adult census income dataset:
 
-<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/Adult.png" width="350" height="350">
+<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/adult_plt.png" width="350" height="350">
 
 The fairness and accuracy scores comparison of four algoritms on Bank marketing dataset:
 
-<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/Bank.png" width="350" height="350">
+<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/bank_plt.png" width="350" height="350">
 
 The fairness and accuracy scores comparison of four algoritms on COMPASS dataset:
 
-<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/Compass.png" width="350" height="350">
+<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/compass_plt.png" width="350" height="350">
 
 The fairness and accuracy scores comparison of four algoritms on Census-income (KDD) dataset:
 
-<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/KDD.png" width="350" height="350">
+<img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/kdd_plt.png" width="350" height="350">
