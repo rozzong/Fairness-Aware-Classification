@@ -118,7 +118,7 @@ In `main.ipynb`, the implemented classifiers are compared with a simple original
 
 | **Adult Census Income** | **Bank marketing** |
 |:-:|:-:|
-| <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/Adult.png" width="350" height="350"> | <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/KDD.png" width="350" height="350"> |
+| <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/adult_plt.png" width="350" height="350"> | <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/bank_plt.png" width="350" height="350"> |
 | **COMPAS** | **KDD Census Income** |
-| <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/Adult.png" width="350" height="350"> | <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/results_images/KDD.png" width="350" height="350"> |
+| <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/compas_plt.png" width="350" height="350"> | <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/kdd_plt.png" width="350" height="350"> |
 
