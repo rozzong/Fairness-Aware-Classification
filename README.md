@@ -62,7 +62,7 @@ This repository contains three methods to address fairness issues in classificat
 
 ## Fairness-Aware-Classification package installation and usage
 
-In order to get use github repositary, at first, you should to clone it:
+In order to get use github repositary, at first, you should clone it:
 
 `!git clone https://github.com/rozzong/Fairness-Aware-Classification`
 
