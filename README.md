@@ -7,9 +7,9 @@ This repository contains **tools** to address **fairness issues** in **classific
 
 ## Content
 
-The module contatins the following:
+The module contains the following:
 
-- A few `classifiers` implemented in order to deal with fairness problems:
+- A few `classifiers` for a fairer approach to classification problems:
 
 	| Classifier                  | Related paper                                                                                                                                             |
 	|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -110,7 +110,7 @@ awc.fit(X_train, y_train, s_train)
 y_pred = awc.predict(X_test)
 ```
 
-For each provided toy datasets, its suggested objective function is accessible with `data.objective`.
+For each provided toy dataset, its suggested objective function is accessible with `data.objective`.
 
 ## Results
 
@@ -119,6 +119,8 @@ In `main.ipynb`, the implemented classifiers are compared with a simple original
 | **Adult Census Income** | **Bank marketing** |
 |:-:|:-:|
 | <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/adult_plt.png" width="350" height="350"> | <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/bank_plt.png" width="350" height="350"> |
+
 | **COMPAS** | **KDD Census Income** |
+|:-:|:-:|
 | <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/compas_plt.png" width="350" height="350"> | <img src="https://github.com/rozzong/Fairness-Aware-Classification/blob/main/images_results/kdd_plt.png" width="350" height="350"> |
 
