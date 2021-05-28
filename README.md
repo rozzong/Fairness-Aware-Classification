@@ -3,7 +3,7 @@
 
 This repository contains **tools** to address **fairness issues** in **classification problems**.
 
-**Authors:** Kirill Myasoedov, [Simona Nitti](https://github.com/simonanitti), [Bekarys Nurtay](https://github.com/bekiichone), [Ksenia Osipova](https://github.com/Ksenia-Osipova),  and [Gabriel Rozzonelli](https://github.com/rozzong).
+**Authors:** Kirill Myasoedov, [Simona Nitti](https://github.com/simonanitti), [Bekarys Nurtay (bekiichone)](https://github.com/bekiichone), [Ksenia Osipova](https://github.com/Ksenia-Osipova),  and [Gabriel Rozzonelli](https://github.com/rozzong).
 
 ## Content
 
